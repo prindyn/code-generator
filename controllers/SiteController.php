@@ -35,7 +35,7 @@ class SiteController extends Controller
      */
     public function actionView()
     {
-        echo ($session['added']);
+        //Output a list of all codes using dataProvider of Yii2
         $searchModel = new CodeSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
@@ -55,7 +55,7 @@ class SiteController extends Controller
     {
         //Open session
         $session = Yii::$app->session;
-
+        //We send information about created codes to the index page. If they exist - will be displayed
         return $this->render('index', [
             'added' => $session['added'],
             'notadded' => $session['notadded']
@@ -85,9 +85,11 @@ class SiteController extends Controller
         while($i<10){
             $randomCode = $this->generateCode();
             if(!in_array($randomCode, $codes)){
+                //create array of codes which added to database
                 $addedCodes[] = [$randomCode, date('Y-m-d H:i:s')];
                 $added[] = $randomCode;
             }else{
+                //create array of codes which already exist and can't be added
                 $notaddedCodes[] = $randomCode;
                 $notadded[] = $randomCode;
             }
@@ -95,36 +97,16 @@ class SiteController extends Controller
         }
         
         //add the codes to database
-        // Yii::$app->db->createCommand()->batchInsert('code', ['code_item', 'created_at'], $addedCodes
-        // )->execute();
+        Yii::$app->db->createCommand()->batchInsert('code', ['code_item', 'created_at'], $addedCodes
+        )->execute();
 
         
-
+        //create session values which will be send to index page 
         $session['added'] = $added;
         $session['notadded'] = $notadded;
 
         return $this->redirect(['index']);
 
-    }
-
-    /**
-     * Updates an existing Code model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
     }
 
     /**
@@ -144,13 +126,12 @@ class SiteController extends Controller
         foreach($issetCodes as $item){
             $codes[] = $item->code_item;
         }
-
+        //clear the user request
         if($model->load(Yii::$app->request->post())){
-
             $chosenCodes = Yii::$app->request->post();
             $chosenCodes = $chosenCodes['Code']['code_item'];
             $deleteCodes = array_diff(preg_split("/[\s-!.,]/", $chosenCodes), ['']);
-           
+           //create arrays of remote codes that exist in the database, and not removed, which do not exist
             foreach($deleteCodes as $key => $item){
 
                if(in_array($item, $codes)){
@@ -160,13 +141,13 @@ class SiteController extends Controller
                }
 
             }
-
+            //delete codes and create in session deleted and not deleted codes, which send to user
             Yii::$app->db->createCommand()->delete('code', ['code_item' => $deleted])->execute();
             $session['deleted'] = $deleted;
             $session['notdeleted'] = $notdeleted;
             
         }
-
+        
         return $this->render('delete', [
             'deleted' => $deleted,
             'notdeleted' => $notdeleted
@@ -212,5 +193,10 @@ class SiteController extends Controller
         $code = implode("", $code_array);
         
         return $code;
+    }
+
+    public function actionReset()
+    {
+        return $this->redirect(['delete']);
     }
 }
