@@ -94,8 +94,8 @@ class SiteController extends Controller
             $i++;
         }
         //add the codes to database
-        Yii::$app->db->createCommand()->batchInsert('code', ['code_item', 'created_at'], $addedCodes
-        )->execute();
+        // Yii::$app->db->createCommand()->batchInsert('code', ['code_item', 'created_at'], $addedCodes
+        // )->execute();
 
         
 
