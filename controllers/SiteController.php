@@ -3,13 +3,15 @@
 namespace app\controllers;
 
 use Yii;
-use yii\filters\AccessControl;
+use app\models\Code;
+use app\models\CodeSearch;
 use yii\web\Controller;
-use yii\web\Response;
+use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
 
+/**
+ * CodeController implements the CRUD actions for Code model.
+ */
 class SiteController extends Controller
 {
     /**
@@ -18,111 +20,159 @@ class SiteController extends Controller
     public function behaviors()
     {
         return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
-                    'logout' => ['post'],
+                    'delete' => ['POST'],
                 ],
             ],
         ];
     }
 
     /**
-     * {@inheritdoc}
+     * Lists all Code models.
+     * @return mixed
      */
-    public function actions()
+    public function actionView()
     {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-            'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
-        ];
+        echo ($session['added']);
+        $searchModel = new CodeSearch();
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        return $this->render('view', [
+            'searchModel' => $searchModel,
+            'dataProvider' => $dataProvider,
+        ]);
     }
 
     /**
-     * Displays homepage.
-     *
-     * @return string
+     * Displays a single Code model.
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException if the model cannot be found
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        //Open session
+        $session = Yii::$app->session;
+
+        return $this->render('index', [
+            'added' => $session['added'],
+            'notadded' => $session['notadded']
+        ]);
+
+        
     }
 
     /**
-     * Login action.
-     *
-     * @return Response|string
+     * Creates a new Code model.
+     * If creation is successful, the browser will be redirected to the 'view' page.
+     * @return mixed
      */
-    public function actionLogin()
+    public function actionCreate()
+    {   
+        $session = Yii::$app->session;
+        
+        $model = new Code();
+        $codes = [];
+        //create list of issets codes
+        $issetCodes = $model->find()->select('code_item')->all();
+        foreach($issetCodes as $item){
+            $codes[] = $item->code_item;
+        }
+        //generate 10 random codes
+        $i = 0;
+        while($i<10){
+            $randomCode = $this->generateCode();
+            if(!in_array($randomCode, $codes)){
+                $addedCodes[] = [$randomCode, date('Y-m-d H:i:s')];
+                $added[] = $randomCode;
+            }else{
+                $notaddedCodes[] = $randomCode;
+                $notadded[] = $randomCode;
+            }
+            $i++;
+        }
+        //add the codes to database
+        Yii::$app->db->createCommand()->batchInsert('code', ['code_item', 'created_at'], $addedCodes
+        )->execute();
+
+        
+
+        $session['added'] = $added;
+        $session['notadded'] = $notadded;
+
+        return $this->redirect(['index']);
+
+    }
+
+    /**
+     * Updates an existing Code model.
+     * If update is successful, the browser will be redirected to the 'view' page.
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException if the model cannot be found
+     */
+    public function actionUpdate($id)
     {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
+        $model = $this->findModel($id);
+
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id]);
         }
 
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        }
-
-        $model->password = '';
-        return $this->render('login', [
+        return $this->render('update', [
             'model' => $model,
         ]);
     }
 
     /**
-     * Logout action.
-     *
-     * @return Response
+     * Deletes an existing Code model.
+     * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @param integer $id
+     * @return mixed
+     * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionLogout()
+    public function actionDelete($id)
     {
-        Yii::$app->user->logout();
+        $this->findModel($id)->delete();
 
-        return $this->goHome();
+        return $this->redirect(['index']);
     }
 
     /**
-     * Displays contact page.
-     *
-     * @return Response|string
+     * Finds the Code model based on its primary key value.
+     * If the model is not found, a 404 HTTP exception will be thrown.
+     * @param integer $id
+     * @return Code the loaded model
+     * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionContact()
+    protected function findModel($id)
     {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
+        if (($model = Code::findOne($id)) !== null) {
+            return $model;
         }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
+
+        throw new NotFoundHttpException('The requested page does not exist.');
     }
 
     /**
-     * Displays about page.
-     *
-     * @return string
-     */
-    public function actionAbout()
+    *
+    *Function generate a random code
+    *
+    **/
+    protected function generateCode($length = 80)
     {
-        return $this->render('about');
+        $num = range(0, 9);
+        $alf = range('a', 'z');
+        $_alf = range('A', 'Z');
+        
+        $symbols = array_merge($num, $alf, $_alf);
+        shuffle($symbols);
+        
+        $code_array = array_slice($symbols, 0, (int)$length);
+        $code = implode("", $code_array);
+        
+        return $code;
     }
 }

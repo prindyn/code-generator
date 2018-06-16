@@ -57,19 +57,24 @@ AppAsset::register($this);
     ]);
     NavBar::end();
     ?>
-
+    
     <div class="container">
         <?= Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
         ]) ?>
         <?= Alert::widget() ?>
+        <p>
+            <?= Html::a('Create 10 Random Codes', ['create'], ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Show All Code', ['view'], ['class' => 'btn btn-success']) ?>
+            <?= Html::a('Delete Code', ['delete'], ['class' => 'btn btn-danger']) ?>
+        </p>
         <?= $content ?>
     </div>
 </div>
 
 <footer class="footer">
     <div class="container">
-        <p class="pull-left">&copy; My Company <?= date('Y') ?></p>
+        <p class="pull-left">&copy; Codes Generator <?= date('Y') ?></p>
 
         <p class="pull-right"><?= Yii::powered() ?></p>
     </div>
