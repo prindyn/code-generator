@@ -141,16 +141,27 @@ class SiteController extends Controller
                }
 
             }
-            //delete codes and create in session deleted and not deleted codes, which send to user
-            Yii::$app->db->createCommand()->delete('code', ['code_item' => $deleted])->execute();
-            $session['deleted'] = $deleted;
-            $session['notdeleted'] = $notdeleted;
+
+            if(!empty($notdeleted)){
+                $session['notdeleted'] = $notdeleted;
+                $errorMessage = 'Error. One or more codes do not exist in the database. Codes have not been removed from the database.';
+            }else{
+                $successMessage = 'The following codes have been deleted from the database';
+                $session['deleted'] = $deleted;
+                //delete codes and create in session deleted and not deleted codes, which send to user
+                Yii::$app->db->createCommand()->delete('code', ['code_item' => $deleted])->execute();
+            }
+
+            
+            
             
         }
         
         return $this->render('delete', [
             'deleted' => $deleted,
-            'notdeleted' => $notdeleted
+            'notdeleted' => $notdeleted,
+            'errorMessage' => $errorMessage,
+            'successMessage' => $successMessage
         ]);
 
 
