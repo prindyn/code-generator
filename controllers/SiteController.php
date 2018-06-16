@@ -121,16 +121,20 @@ class SiteController extends Controller
         $model = new Code();
         $session = Yii::$app->session;
         $codes = [];
-        //create list of issets codes
-        $issetCodes = $model->find()->select('code_item')->all();
-        foreach($issetCodes as $item){
-            $codes[] = $item->code_item;
-        }
+        
         //clear the user request
         if($model->load(Yii::$app->request->post())){
+
+            //create list of issets codes
+            $issetCodes = $model->find()->select('code_item')->all();
+            foreach($issetCodes as $item){
+                $codes[] = $item->code_item;
+            }
+
             $chosenCodes = Yii::$app->request->post();
             $chosenCodes = $chosenCodes['Code']['code_item'];
             $deleteCodes = array_diff(preg_split("/[\s-!.,]/", $chosenCodes), ['']);
+
            //create arrays of remote codes that exist in the database, and not removed, which do not exist
             foreach($deleteCodes as $key => $item){
 
@@ -152,8 +156,6 @@ class SiteController extends Controller
                 Yii::$app->db->createCommand()->delete('code', ['code_item' => $deleted])->execute();
             }
 
-            
-            
             
         }
         
