@@ -15,9 +15,9 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?php $session = Yii::$app->session; ?>
 
-    <?php if(isset($session['added']) || isset($session['notadded'])): ?>
+    <?php if(isset($added) || isset($notadded)): ?>
 
-       <?php if(isset($session['added'])): ?>
+       <?php if(isset($added)): ?>
         
             <h1><?= Html::encode('Created Codes') ?></h1>
             <div class="alert alert-success" role="alert">
@@ -29,11 +29,11 @@ $this->params['breadcrumbs'][] = $this->title;
         <?php unset($session['added']) ?>
         <?php endif; ?>
 
-        <?php if(isset($session['notadded']) && $session['notadded'] != ''): ?>
+        <?php if(isset($notadded)): ?>
     
             <h1><?= Html::encode('Not Created Codes. These Codes Already Exist') ?></h1>
             <div class="alert alert-danger" role="alert">
-            <?php foreach($added as $item): ?>
+            <?php foreach($notadded as $item): ?>
             <?php echo $item. '<br>'; ?>
             <?php endforeach; ?>
             </div>

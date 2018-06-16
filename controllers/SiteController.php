@@ -23,7 +23,7 @@ class SiteController extends Controller
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
-                    'delete' => ['POST'],
+                    //'delete' => $_POST['delete'],
                 ],
             ],
         ];
@@ -93,6 +93,7 @@ class SiteController extends Controller
             }
             $i++;
         }
+        
         //add the codes to database
         // Yii::$app->db->createCommand()->batchInsert('code', ['code_item', 'created_at'], $addedCodes
         // )->execute();
@@ -133,11 +134,48 @@ class SiteController extends Controller
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionDelete($id)
+    public function actionDelete()
     {
-        $this->findModel($id)->delete();
+        $model = new Code();
+        $session = Yii::$app->session;
+        $codes = [];
+        //create list of issets codes
+        $issetCodes = $model->find()->select('code_item')->all();
+        foreach($issetCodes as $item){
+            $codes[] = $item->code_item;
+        }
 
-        return $this->redirect(['index']);
+        if($model->load(Yii::$app->request->post())){
+
+            $chosenCodes = Yii::$app->request->post();
+            $chosenCodes = $chosenCodes['Code']['code_item'];
+            $deleteCodes = array_diff(preg_split("/[\s-!.,]/", $chosenCodes), ['']);
+           
+            foreach($deleteCodes as $key => $item){
+
+               if(in_array($item, $codes)){
+                    $deleted[] = $item; 
+               }else{
+                    $notdeleted[] = $item;
+               }
+
+            }
+
+            Yii::$app->db->createCommand()->delete('code', ['code_item' => $deleted])->execute();
+            $session['deleted'] = $deleted;
+            $session['notdeleted'] = $notdeleted;
+            
+        }
+
+        return $this->render('delete', [
+            'deleted' => $deleted,
+            'notdeleted' => $notdeleted
+        ]);
+
+
+
+
+
     }
 
     /**

@@ -13,6 +13,7 @@ use Yii;
  */
 class Code extends \yii\db\ActiveRecord
 {
+    public $delete;
     /**
      * {@inheritdoc}
      */
@@ -27,9 +28,7 @@ class Code extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['code_item', 'created_at'], 'required'],
-            [['created_at'], 'safe'],
-            [['code_item'], 'string', 'max' => 100],
+            [['code_item'], 'required'],
         ];
     }
 
@@ -40,7 +39,7 @@ class Code extends \yii\db\ActiveRecord
     {
         return [
             'id' => 'ID',
-            'code_item' => 'Code',
+            'code_item' => 'Codes',
             'created_at' => 'Created date',
         ];
     }
